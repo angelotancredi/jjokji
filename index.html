@@ -68,11 +68,13 @@
   aside .cat .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
   aside .cat .n { color: var(--sub); font-size: 12px; }
   aside h3 { font-size: 12px; color: var(--sub); margin: 16px 12px 4px; font-weight: 600; }
-  .tagcloud { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; }
+  .tagcloud { display: flex; flex-wrap: wrap; gap: 2px 4px; padding: 0 8px; }
 
   /* 태그: 인스타그램처럼 박스 없이 #글자만 (분류 배지보다 한 단계 약하게) */
   .tag { display: inline-block; font-size: 12px; padding: 1px 4px; border-radius: 6px; color: var(--tag); cursor: pointer; }
   .tag:hover { text-decoration: underline; }
+  .tags { display: inline-flex; flex-wrap: wrap; gap: 2px; }
+  .tags .tag { padding: 1px 2px; }
   .tag.on { background: var(--tag-soft); font-weight: 600; text-decoration: none; }
 
   /* 태그 입력칸: 쉼표/엔터를 치면 배지로 바뀜 */
@@ -199,6 +201,12 @@
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   .toast.show { opacity: 1; }
+  /* 선 아이콘 (이모지 대신, 글자색을 따라감) */
+  .ico.logo { color: var(--accent); margin-right: 6px; width: 1.1em; height: 1.1em; vertical-align: -0.16em; }
+  .cico { margin-right: 8px; color: var(--sub); }
+  .cico.star { color: var(--star); }
+  .cico.star .ico { fill: var(--star); }
+  .ico { width: 1.05em; height: 1.05em; vertical-align: -0.18em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .totop {
     position: fixed; right: 20px; bottom: 20px; z-index: 6; width: 44px; height: 44px; border-radius: 50%;
     font-size: 18px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,.15);
@@ -222,17 +230,17 @@
 <div class="lock" id="lock"></div>
 
 <header>
-  <h1>📮 쪽지 <span>보관함</span></h1>
+  <h1><span data-ico="mail" class="logo"></span>쪽지 <span>보관함</span></h1>
   <input class="search" id="q" type="search" placeholder="검색 (내용, 제목, 보낸사람, 태그, 첨부파일 이름)">
   <div class="actions">
     <span class="fstat" id="folderStatus"></span>
-    <button id="btnFolder" title="첨부파일을 저장할 PC 폴더">📁 첨부 폴더 연결</button>
-    <button id="btnRules" title="분류 규칙 편집">⚙️ 분류 규칙</button>
-    <button id="btnExport" title="백업 파일로 저장">💾 백업</button>
-    <button id="btnImport" title="백업 파일 불러오기">📂 불러오기</button>
+    <button id="btnFolder" title="첨부파일을 저장할 PC 폴더"><span data-ico="folder"></span> 첨부 폴더 연결</button>
+    <button id="btnRules" title="분류 규칙 편집"><span data-ico="sliders"></span> 분류 규칙</button>
+    <button id="btnExport" title="백업 파일로 저장"><span data-ico="download"></span> 백업</button>
+    <button id="btnImport" title="백업 파일 불러오기"><span data-ico="upload"></span> 불러오기</button>
     <input type="file" id="fileImport" accept=".json" hidden>
-    <button id="btnPw" title="비밀번호 바꾸기">🔑</button>
-    <button id="btnLock" title="로그아웃 (10분 동안 아무것도 안 하면 자동으로 로그아웃돼요)">🔒 로그아웃</button>
+    <button id="btnPw" title="비밀번호 바꾸기" aria-label="비밀번호 바꾸기"><span data-ico="key"></span></button>
+    <button id="btnLock" title="로그아웃 (10분 동안 아무것도 안 하면 자동으로 로그아웃돼요)"><span data-ico="logout"></span> 로그아웃</button>
   </div>
 </header>
 
@@ -255,7 +263,7 @@
         <select id="pCat"></select>
         <input id="pTags" placeholder="태그 입력 후 쉼표나 엔터 (예: 화재조사)">
       </div>
-      <div class="drop" id="pDrop">📎 첨부파일을 여기로 끌어다 놓거나 <u>클릭해서 선택</u> · 파일을 복사(Ctrl+C)해서 Ctrl+V로 붙여넣어도 돼요</div>
+      <div class="drop" id="pDrop"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> 첨부파일을 여기로 끌어다 놓거나 <u>클릭해서 선택</u> · 파일을 복사(Ctrl+C)해서 Ctrl+V로 붙여넣어도 돼요</div>
       <input type="file" id="pFiles" multiple hidden>
       <div class="attlist" id="pAtts"></div>
       <div class="bottom">
@@ -300,8 +308,8 @@
         <label>내용</label>
         <button type="button" id="dSmaller" title="글자 작게">가−</button>
         <button type="button" id="dBigger" title="글자 크게">가+</button>
-        <button type="button" id="dTidy" title="빈 줄·공백 정리">✨ 정리</button>
-        <button type="button" id="dEdit">✏️ 수정</button>
+        <button type="button" id="dTidy" title="빈 줄·공백 정리"><span data-ico="wand"></span> 정리</button>
+        <button type="button" id="dEdit"><span data-ico="pencil"></span> 수정</button>
       </div>
       <div class="readview" id="dView"></div>
       <textarea id="dText" rows="12" hidden></textarea>
@@ -310,13 +318,13 @@
     <div>
       <label>첨부파일</label>
       <div class="attlist" id="dAtts"></div>
-      <div class="drop" id="dDrop">📎 파일 추가 (끌어다 놓기, 클릭, Ctrl+V)</div>
+      <div class="drop" id="dDrop"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> 파일 추가 (끌어다 놓기, 클릭, Ctrl+V)</div>
       <input type="file" id="dFiles" multiple hidden>
     </div>
   </div>
   <div class="dfoot">
-    <button id="dDelete">🗑 삭제</button>
-    <button id="dCopy">📋 내용 복사</button>
+    <button id="dDelete"><span data-ico="trash"></span> 삭제</button>
+    <button id="dCopy"><span data-ico="copy"></span> 내용 복사</button>
     <span class="spacer"></span>
     <button id="dCancel">닫기</button>
     <button class="primary" id="dSave">저장</button>
@@ -353,6 +361,29 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// 선 아이콘 (이모지는 윈도우·맥·폰마다 모양이 달라서 직접 그린 아이콘을 씀, 글자색을 따라감)
+const ICON_PATHS = {
+  clip: '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  sliders: '<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  wand: '<path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5"/>',
+  pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  trash: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  copy: '<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/>',
+  eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  file: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2zM14 2v6h6"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+  bulb: '<path d="M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4M12 17h.01"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+};
+const ico = (n, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[n]}</svg>`;
+const CLIP = ico('clip');
 /* ===================== 저장소 ===================== */
 const KEY = 'jjokji-box-v1';
 const DEFAULT_CATS = [
@@ -751,7 +782,7 @@ async function connectFolder() {
 function renderFolder() {
   const btn = $('#btnFolder'), el = $('#folderBanner'), temp = tempCount();
   btn.classList.toggle('warn', !!folder && !folderReady);
-  btn.textContent = !FS_OK ? '📎 브라우저 보관' : !folder ? '📁 첨부 폴더 연결' : folderReady ? '📁 폴더 바꾸기' : '📁 허용하기';
+  btn.innerHTML = !FS_OK ? CLIP + ' 브라우저 보관' : !folder ? ico('folder') + ' 첨부 폴더 연결' : folderReady ? ico('folder') + ' 폴더 바꾸기' : ico('folder') + ' 허용하기';
   // 연결 상태 표시 (보안상 브라우저는 폴더 이름까지만 알려줘요. C:\... 전체 경로는 알 수 없음)
   const st = $('#folderStatus');
   const state = !FS_OK ? ['', '첨부: 이 브라우저 안에 보관 중'] : !folder ? ['', '첨부 폴더 연결 안 됨']
@@ -762,7 +793,7 @@ function renderFolder() {
   let msg = '', label = '';
   if (folder && !folderReady) { msg = `첨부파일을 열거나 저장하려면 '${esc(folder.name)}' 폴더 접근을 허용해 주세요. (브라우저를 새로 열 때마다 한 번)`; label = '허용하기'; }
   else if (FS_OK && !folder && temp) { msg = `첨부파일 ${temp}개가 브라우저에 임시 보관 중이에요. 첨부 폴더를 연결하면 PC 폴더로 옮겨드려요.`; label = '폴더 연결'; }
-  el.innerHTML = msg ? `<div class="banner">📁 ${msg} <button id="folderBannerBtn">${label}</button></div>` : '';
+  el.innerHTML = msg ? `<div class="banner">${ico('folder')} ${msg} <button id="folderBannerBtn">${label}</button></div>` : '';
   if (msg) $('#folderBannerBtn').onclick = connectFolder;
 }
 $('#btnFolder').onclick = connectFolder;
@@ -770,11 +801,11 @@ $('#btnFolder').onclick = connectFolder;
 function attRows(atts, { paths = false } = {}) {
   return (atts || []).map((a, i) => `
     <div class="att" title="${esc(a.path || a.name)}">
-      <span>📄</span>
+      <span>${ico('file')}</span>
       ${a.id ? `<a href="#" data-open="${i}">${esc(a.name)}</a>` : `<span>${esc(a.name)}</span>`}
       <span class="sz">${fmtSize(a.size)}</span>
       ${a.where === 'temp' ? '<span class="tmp">브라우저 임시 보관</span>' : ''}
-      ${paths && a.path ? `<span class="path">📁 ${esc((folder ? folder.name + '/' : '') + a.path)}</span>` : ''}
+      ${paths && a.path ? `<span class="path">${ico('folder')} ${esc((folder ? folder.name + '/' : '') + a.path)}</span>` : ''}
       <button type="button" data-rm="${i}" title="첨부 빼기">×</button>
     </div>`).join('');
 }
@@ -838,11 +869,11 @@ function renderCatSelect(sel, value) {
 
 function renderSide() {
   const count = id => db.notes.filter(n => id === 'star' ? n.star : n.cat === id).length;
-  const row = (id, name, color, n) =>
+  const row = (id, name, color, n, icon) =>
     `<div class="cat ${ui.cat === id ? 'active' : ''}" data-cat="${id}">
-       <span>${color ? `<span class="dot" style="background:${color}"></span>` : ''}${esc(name)}</span>
+       <span>${color ? `<span class="dot" style="background:${color}"></span>` : ''}${icon ? `<span class="cico ${id}">${ico(icon)}</span>` : ''}${esc(name)}</span>
        <span class="n">${n}</span></div>`;
-  let html = row('all', '📁 전체', null, db.notes.length) + row('star', '⭐ 중요', null, count('star'));
+  let html = row('all', '전체', null, db.notes.length, 'inbox') + row('star', '중요', null, count('star'), 'star');
   html += '<h3>분류</h3>';
   html += allCats().map(c => row(c.id, c.name, c.color, count(c.id))).join('');
 
@@ -916,8 +947,8 @@ function renderList() {
           <span class="badge" style="background:${c.color}">${esc(c.name)}</span>
           <span>${esc(n.date || '')}</span>
           ${n.sender ? `<span>· ${highlight(n.sender, ui.q)}</span>` : ''}
-          ${(n.atts || []).length ? `<span title="${esc(n.atts.map(a => a.name).join(', '))}">📎 ${n.atts.length}</span>` : ''}
-          ${(n.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join(' ')}
+          ${(n.atts || []).length ? `<span title="${esc(n.atts.map(a => a.name).join(', '))}">${CLIP} ${n.atts.length}</span>` : ''}
+          ${(n.tags || []).length ? `<span class="tags">${n.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</span>` : ''}
         </div>
         <div class="title">${highlight(n.title, ui.q)}</div>
         <div class="preview">${highlight(previewOf(n), ui.q)}</div>
@@ -930,7 +961,7 @@ function renderBanner() {
   const el = $('#backupBanner');
   const days = db.lastBackup ? Math.floor((Date.now() - db.lastBackup) / 86400000) : null;
   if (db.notes.length >= 5 && (days === null || days >= 7)) {
-    el.innerHTML = `<div class="banner">💡 ${days === null ? '아직 백업한 적이 없어요.' : days + '일 동안 백업하지 않았어요.'}
+    el.innerHTML = `<div class="banner">${ico('bulb')} ${days === null ? '아직 백업한 적이 없어요.' : days + '일 동안 백업하지 않았어요.'}
       브라우저 기록을 지우면 쪽지도 사라지니 가끔 백업 파일로 저장해두세요.
       <button id="bannerBackup">지금 백업</button></div>`;
     $('#bannerBackup').onclick = exportJson;
@@ -977,9 +1008,9 @@ updateGuess.tidyNote = () => {
   if (pRaw && !pShowRaw && cur !== tidyText(pRaw)) pRaw = null;   // 정리한 뒤 직접 고쳤으면 되돌리기 기준 버림
   if (pRaw && pShowRaw && cur !== pRaw) { pRaw = null; pShowRaw = false; }
   let html = '';
-  if (pRaw && !pShowRaw) html = '✨ 빈 줄·공백을 깔끔하게 정리했어요 · <a href="#" data-t="raw">원래대로</a>';
-  else if (pRaw && pShowRaw) html = '정리하기 전 원래 내용이에요 · <a href="#" data-t="tidy">✨ 다시 정리</a>';
-  else if (cur.trim() && tidyText(cur) !== cur.trim()) html = '<a href="#" data-t="tidy">✨ 빈 줄·공백 정리하기</a>';
+  if (pRaw && !pShowRaw) html = ico('wand') + ' 빈 줄·공백을 깔끔하게 정리했어요 · <a href="#" data-t="raw">원래대로</a>';
+  else if (pRaw && pShowRaw) html = '정리하기 전 원래 내용이에요 · <a href="#" data-t="tidy">' + ico('wand') + ' 다시 정리</a>';
+  else if (cur.trim() && tidyText(cur) !== cur.trim()) html = '<a href="#" data-t="tidy">' + ico('wand') + ' 빈 줄·공백 정리하기</a>';
   el.innerHTML = html;
   el.querySelectorAll('[data-t]').forEach(a => a.onclick = e => {
     e.preventDefault();
@@ -1108,7 +1139,7 @@ applyReadSize();
 function setEditMode(on) {
   $('#dText').hidden = !on;
   $('#dView').hidden = on;
-  $('#dEdit').textContent = on ? '👁 보기' : '✏️ 수정';
+  $('#dEdit').innerHTML = on ? ico('eye') + ' 보기' : ico('pencil') + ' 수정';
   if (!on) $('#dView').textContent = $('#dText').value;
   else $('#dText').focus();
 }
@@ -1271,12 +1302,12 @@ function showLock(mode = 'login') {
   try { last = localStorage.getItem('jjokji-last-user'); } catch {}
   const legacyN = users.length ? 0 : legacyCount();
   const tab = (m, label) => `<button type="button" class="ltab ${mode === m ? 'on' : ''}" data-mode="${m}">${label}</button>`;
-  let html = `<div class="lockbox"><h1>📮 쪽지 <span>보관함</span></h1>
+  let html = `<div class="lockbox"><h1>${ico('mail', 'logo')}쪽지 <span>보관함</span></h1>
     <div class="ltabs">${tab('login', '로그인')}${tab('create', '새 계정')}${tab('restore', '백업으로 복구')}</div>`;
   if (mode === 'login') {
     html += `<form>
         ${users.length ? '' : `<p class="hint">이 브라우저에는 아직 계정이 없어요.<br>
-          처음이면 <b>새 계정</b>, 다른 브라우저(크롬↔엣지 등)나 다른 PC에서 쓰던 분은 그쪽에서 💾 백업한 뒤 <b>백업으로 복구</b>를 눌러주세요.</p>`}
+          처음이면 <b>새 계정</b>, 다른 브라우저(크롬↔엣지 등)나 다른 PC에서 쓰던 분은 그쪽에서 [백업]한 뒤 <b>백업으로 복구</b>를 눌러주세요.</p>`}
         <label>아이디</label>
         <input id="lName" list="lUsers" autocomplete="username" value="${esc(users.includes(last) ? last : users[0] || '')}">
         <datalist id="lUsers">${users.map(u => `<option value="${esc(u)}">`).join('')}</datalist>
@@ -1291,13 +1322,13 @@ function showLock(mode = 'login') {
         <label>아이디</label><input id="cName" maxlength="20" autocomplete="username">
         <label>비밀번호 (6자 이상)</label><input id="cPw" type="password" autocomplete="new-password">
         <label>비밀번호 확인</label><input id="cPw2" type="password" autocomplete="new-password">
-        <p class="warn">⚠️ 비밀번호를 잊으면 쪽지를 되살릴 방법이 없어요. 꼭 기억해 두세요.</p>
+        <p class="warn">${ico('alert')} 비밀번호를 잊으면 쪽지를 되살릴 방법이 없어요. 꼭 기억해 두세요.</p>
         <div class="err" id="lErr"></div>
         <button class="primary" type="submit">계정 만들기</button>
       </form>`;
   } else {
     html += `<form>
-        <p class="hint">💾 백업 파일과 백업할 때의 비밀번호로 보관함을 되살려요. 새 버전 파일로 옮길 때도 이걸 쓰면 돼요.</p>
+        <p class="hint">백업 파일과 백업할 때의 비밀번호로 보관함을 되살려요. 새 버전 파일로 옮길 때도 이걸 쓰면 돼요.</p>
         <label>백업 파일</label><input id="rFile" type="file" accept=".json">
         <label>백업할 때의 비밀번호</label><input id="rPw" type="password">
         <div class="err" id="lErr"></div>
@@ -1328,7 +1359,7 @@ function showLock(mode = 'login') {
 async function doLogin(name, pw) {
   const rec = readUser(name);
   if (!name) throw new Error('아이디를 입력해 주세요.');
-  if (!rec) throw new Error(`이 브라우저에는 '${name}' 계정이 없어요.\n다른 브라우저나 PC에서 쓰던 계정이면 그쪽에서 💾 백업한 뒤 [백업으로 복구] 탭을 이용해 주세요.`);
+  if (!rec) throw new Error(`이 브라우저에는 '${name}' 계정이 없어요.\n다른 브라우저나 PC에서 쓰던 계정이면 그쪽에서 [백업]한 뒤 [백업으로 복구] 탭을 이용해 주세요.`);
   const key = await importDek(await unwrapRaw(rec, pw));
   enter(name, key, normDb(JSON.parse(await decText(key, rec.data))));
 }
@@ -1356,7 +1387,7 @@ async function doRestore(file, pw) {
   if (!file) throw new Error('백업 파일을 골라주세요.');
   let b;
   try { b = JSON.parse(await file.text()); } catch { throw new Error('백업 파일을 읽을 수 없어요.'); }
-  if (b.version !== 2 || !b.wrapped) throw new Error('암호화된 백업 파일이 아니에요. (예전 백업은 로그인한 뒤 📂 불러오기로 넣어주세요)');
+  if (b.version !== 2 || !b.wrapped) throw new Error('암호화된 백업 파일이 아니에요. (예전 백업은 로그인한 뒤 [불러오기]로 넣어주세요)');
   const key = await importDek(await unwrapRaw(b, pw));
   const data = normDb(JSON.parse(await decText(key, b.data)));
   const name = b.user || '복구한 사용자';
@@ -1371,7 +1402,7 @@ function enter(name, key, data) {
   try { localStorage.setItem('jjokji-last-user', name); } catch {}
   document.body.classList.remove('locked');
   $('#lock').innerHTML = '';
-  $('#btnLock').textContent = `🔒 ${name} · 로그아웃`;
+  $('#btnLock').innerHTML = `${ico('logout')} ${esc(name)} · 로그아웃`;
   lastActive = Date.now();
   resetPaste();
   renderAll();
@@ -1426,6 +1457,9 @@ $('#btnPw').onclick = async () => {
   });
   if (ok) toast('비밀번호를 바꿨어요. 예전 백업 파일은 예전 비밀번호로 열려요');
 };
+
+
+document.querySelectorAll('[data-ico]').forEach(el => el.outerHTML = ico(el.dataset.ico, el.className));
 
 /* 맨 위로 버튼 + 왼쪽 분류 고정 위치(머리줄 높이) */
 const toTop = document.createElement('button');
