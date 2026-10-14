@@ -14,12 +14,14 @@
     --accent: #d9381e;
     --accent-soft: #fdecea;
     --star: #e8a200;
+    --tag: #2b62c9; --tag-soft: #e8effc;
     --radius: 10px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #15181d; --panel: #1e2229; --line: #2e333c; --text: #e8eaed;
       --sub: #9aa1ab; --accent: #ff6a4d; --accent-soft: #3a2420; --star: #ffc53d;
+      --tag: #7fa8ff; --tag-soft: #1f2a40;
     }
   }
   * { box-sizing: border-box; }
@@ -68,11 +70,10 @@
   aside h3 { font-size: 12px; color: var(--sub); margin: 16px 12px 4px; font-weight: 600; }
   .tagcloud { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; }
 
-  .tag {
-    display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px;
-    background: var(--bg); border: 1px solid var(--line); color: var(--sub); cursor: pointer;
-  }
-  .tag.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  /* 태그: 인스타그램처럼 박스 없이 #글자만 (분류 배지보다 한 단계 약하게) */
+  .tag { display: inline-block; font-size: 12px; padding: 1px 4px; border-radius: 6px; color: var(--tag); cursor: pointer; }
+  .tag:hover { text-decoration: underline; }
+  .tag.on { background: var(--tag-soft); font-weight: 600; text-decoration: none; }
 
   /* 태그 입력칸: 쉼표/엔터를 치면 배지로 바뀜 */
   .taginput {
@@ -83,7 +84,7 @@
   .taginput input { border: 0; padding: 4px 2px; flex: 1; min-width: 120px; width: auto; background: transparent; outline: none; }
   .chip {
     display: inline-flex; align-items: center; gap: 2px; font-size: 13px; padding: 1px 4px 1px 10px; border-radius: 99px;
-    background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent);
+    background: var(--tag-soft); color: var(--tag);
   }
   .chip button { border: 0; background: none; padding: 0 4px; color: inherit; line-height: 1; font-size: 14px; }
 
