@@ -1,0 +1,1421 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>쪽지 보관함</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --line: #e2e5ea;
+    --text: #1d2330;
+    --sub: #6b7280;
+    --accent: #d9381e;
+    --accent-soft: #fdecea;
+    --star: #e8a200;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181d; --panel: #1e2229; --line: #2e333c; --text: #e8eaed;
+      --sub: #9aa1ab; --accent: #ff6a4d; --accent-soft: #3a2420; --star: #ffc53d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Pretendard", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
+    font-size: 14px; line-height: 1.5;
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 8px;
+    padding: 6px 12px; cursor: pointer;
+  }
+  button:hover { border-color: var(--sub); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.ghost { border-color: transparent; background: transparent; }
+  input, textarea, select {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 10px; width: 100%;
+  }
+  textarea { resize: vertical; }
+
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+    background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 18px; margin: 0; white-space: nowrap; }
+  header h1 span { color: var(--accent); }
+  header .search { flex: 1; max-width: 480px; }
+  header .actions { margin-left: auto; display: flex; gap: 6px; }
+
+  .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; padding: 16px 20px; max-width: 1200px; margin: 0 auto; }
+  aside { display: flex; flex-direction: column; gap: 4px; }
+  aside .cat {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-radius: 8px; cursor: pointer; border: 1px solid transparent;
+  }
+  aside .cat:hover { background: var(--panel); }
+  aside .cat.active { background: var(--panel); border-color: var(--line); font-weight: 600; }
+  aside .cat .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  aside .cat .n { color: var(--sub); font-size: 12px; }
+  aside h3 { font-size: 12px; color: var(--sub); margin: 16px 12px 4px; font-weight: 600; }
+  .tagcloud { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; }
+
+  .tag {
+    display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px;
+    background: var(--bg); border: 1px solid var(--line); color: var(--sub); cursor: pointer;
+  }
+  .tag.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  /* 태그 입력칸: 쉼표/엔터를 치면 배지로 바뀜 */
+  .taginput {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 38px;
+    border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 4px 8px; cursor: text;
+  }
+  .taginput:focus-within { border-color: var(--sub); }
+  .taginput input { border: 0; padding: 4px 2px; flex: 1; min-width: 120px; width: auto; background: transparent; outline: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 2px; font-size: 13px; padding: 1px 4px 1px 10px; border-radius: 99px;
+    background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent);
+  }
+  .chip button { border: 0; background: none; padding: 0 4px; color: inherit; line-height: 1; font-size: 14px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .paste h2 { font-size: 15px; margin: 0 0 10px; }
+  .paste .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .paste .bottom { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .paste .guess { color: var(--sub); font-size: 13px; flex: 1; }
+  .paste .guess b { color: var(--accent); }
+
+  .listhead { display: flex; align-items: center; gap: 8px; margin: 18px 0 8px; }
+  .listhead .count { color: var(--sub); }
+  .listhead select { width: auto; margin-left: auto; }
+
+  .item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .item:last-child { border-bottom: 0; }
+  .item:hover { background: var(--bg); }
+  .item .star { color: var(--line); font-size: 18px; line-height: 1; border: 0; background: none; padding: 0; }
+  .item .star.on { color: var(--star); }
+  .item .body { flex: 1; min-width: 0; }
+  .item .meta { display: flex; gap: 8px; align-items: center; color: var(--sub); font-size: 12px; flex-wrap: wrap; }
+  .item .title { font-weight: 600; margin: 2px 0; }
+  .item .preview { color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { font-size: 11px; padding: 1px 8px; border-radius: 99px; color: #fff; font-weight: 600; }
+  mark { background: #ffe58a; color: #000; border-radius: 2px; }
+  .empty { text-align: center; color: var(--sub); padding: 40px 10px; }
+
+  dialog {
+    border: 1px solid var(--line); border-radius: 14px; padding: 0; width: min(720px, 94vw);
+    background: var(--panel); color: var(--text);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog .dhead { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  dialog .dhead h2 { font-size: 16px; margin: 0; flex: 1; }
+  dialog .dbody { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; max-height: 70vh; overflow: auto; }
+  dialog .dfoot { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); }
+  dialog .dfoot .spacer { flex: 1; }
+  dialog label { font-size: 12px; color: var(--sub); display: block; margin-bottom: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .rule { display: grid; grid-template-columns: 24px 120px 1fr 32px; gap: 6px; align-items: center; }
+  .rule input[type=color] { padding: 0; height: 28px; border: 0; background: none; }
+  .hint { color: var(--sub); font-size: 12px; }
+
+  /* 첨부파일 */
+  .drop {
+    margin-top: 8px; border: 1.5px dashed var(--line); border-radius: 8px; padding: 10px 12px;
+    color: var(--sub); font-size: 13px; text-align: center; cursor: pointer;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .attlist { display: flex; flex-direction: column; gap: 4px; }
+  .attlist:not(:empty) { margin-top: 8px; }
+  .att {
+    display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--bg); font-size: 13px;
+  }
+  .att a { color: var(--text); text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .att a:hover { text-decoration: underline; }
+  .att .sz { color: var(--sub); font-size: 12px; white-space: nowrap; }
+  .att .path { color: var(--sub); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .att .tmp { font-size: 11px; color: var(--accent); white-space: nowrap; }
+  .att button { margin-left: auto; border: 0; background: none; padding: 0 4px; color: var(--sub); }
+  #btnFolder.warn { border-color: var(--accent); color: var(--accent); }
+  .fstat {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--sub);
+    padding: 0 6px; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .fstat b { color: var(--text); font-weight: 600; }
+  .fstat .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--line); }
+  .fstat.ok .dot { background: #1f9d55; }
+  .fstat.warn .dot { background: var(--star); }
+  .fstat.warn { color: var(--accent); }
+
+  /* 잠금 화면 */
+  .lock { display: none; }
+  body.locked .lock { display: flex; min-height: 100vh; align-items: center; justify-content: center; padding: 16px; }
+  body.locked > header, body.locked > .layout { display: none; }
+  .lockbox { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 28px; width: min(380px, 100%); }
+  .lockbox h1 { font-size: 22px; margin: 0 0 16px; text-align: center; }
+  .lockbox h1 span { color: var(--accent); }
+  .lockbox form { display: flex; flex-direction: column; gap: 6px; }
+  .lockbox label { font-size: 12px; color: var(--sub); margin-top: 6px; }
+  .lockbox button.primary { margin-top: 12px; padding: 10px; }
+  .lockbox .hint { margin: 0 0 4px; font-size: 13px; }
+  .lockbox .links { text-align: center; margin-top: 14px; font-size: 13px; }
+  .lockbox .links a { color: var(--sub); }
+  .warn { color: var(--accent); font-size: 12px; margin: 6px 0 0; }
+  .ltabs { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 10px; margin-bottom: 14px; }
+  .ltab { flex: 1; border: 0; background: transparent; padding: 7px 4px; border-radius: 8px; color: var(--sub); font-size: 13px; }
+  .ltab.on { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .err { color: var(--accent); font-size: 13px; }
+
+  /* 본문 읽기 화면 */
+  .texthead { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+  .texthead label { margin: 0 auto 0 0; }
+  .texthead button { padding: 2px 8px; font-size: 12px; }
+  .readview {
+    white-space: pre-wrap; word-break: break-word; line-height: 1.85; font-size: var(--read-size, 15px);
+    border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; max-height: 50vh; overflow: auto;
+    background: var(--bg);
+  }
+  .tidied { color: var(--sub); font-size: 12px; }
+  .tidied a { color: var(--accent); }
+
+  .banner {
+    background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 12px;
+    font-size: 13px; margin-bottom: 12px; display: flex; gap: 8px; align-items: center;
+  }
+  .banner button { margin-left: auto; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--panel); padding: 10px 18px; border-radius: 99px;
+    opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 760px) {
+    header { flex-wrap: wrap; padding: 10px 16px; }
+    header .search { order: 3; max-width: none; flex-basis: 100%; }
+    .layout { grid-template-columns: minmax(0, 1fr); padding: 12px 16px; }
+    aside { flex-direction: row; overflow-x: auto; }
+    aside h3, .tagcloud { display: none; }
+    aside .cat { white-space: nowrap; }
+    .paste .row, .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body class="locked">
+<div class="lock" id="lock"></div>
+
+<header>
+  <h1>📮 쪽지 <span>보관함</span></h1>
+  <input class="search" id="q" type="search" placeholder="검색 (내용, 제목, 보낸사람, 태그, 첨부파일 이름)">
+  <div class="actions">
+    <span class="fstat" id="folderStatus"></span>
+    <button id="btnFolder" title="첨부파일을 저장할 PC 폴더">📁 첨부 폴더 연결</button>
+    <button id="btnRules" title="분류 규칙 편집">⚙️ 분류 규칙</button>
+    <button id="btnExport" title="백업 파일로 저장">💾 백업</button>
+    <button id="btnImport" title="백업 파일 불러오기">📂 불러오기</button>
+    <input type="file" id="fileImport" accept=".json" hidden>
+    <button id="btnPw" title="비밀번호 바꾸기">🔑</button>
+    <button id="btnLock" title="잠그기 (10분 동안 아무것도 안 하면 자동으로 잠겨요)">🔒 잠금</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside id="side"></aside>
+
+  <main>
+    <div id="folderBanner"></div>
+    <div id="backupBanner"></div>
+
+    <section class="card paste">
+      <h2>새 쪽지 보관하기</h2>
+      <textarea id="pText" rows="6" placeholder="메신저에서 쪽지 내용을 복사(Ctrl+C)해서 여기에 붙여넣기(Ctrl+V) 하세요."></textarea>
+      <div class="row">
+        <input id="pTitle" placeholder="제목 (비우면 첫 줄로 자동)">
+        <input id="pSender" placeholder="보낸사람 (자동 인식 시도)">
+        <input id="pDate" type="date">
+      </div>
+      <div class="row" style="grid-template-columns: 1fr 2fr;">
+        <select id="pCat"></select>
+        <input id="pTags" placeholder="태그 입력 후 쉼표나 엔터 (예: 화재조사)">
+      </div>
+      <div class="drop" id="pDrop">📎 첨부파일을 여기로 끌어다 놓거나 <u>클릭해서 선택</u> · 파일을 복사(Ctrl+C)해서 Ctrl+V로 붙여넣어도 돼요</div>
+      <input type="file" id="pFiles" multiple hidden>
+      <div class="attlist" id="pAtts"></div>
+      <div class="bottom">
+        <div class="guess" id="pGuess">붙여넣으면 분류를 자동으로 추천해요.</div>
+        <button id="pClear" class="ghost">지우기</button>
+        <button id="pSave" class="primary">보관하기 (Ctrl+Enter)</button>
+      </div>
+    </section>
+
+    <div class="listhead">
+      <strong id="listTitle">전체</strong>
+      <span class="count" id="listCount"></span>
+      <select id="sort">
+        <option value="date">날짜 최신순</option>
+        <option value="dateAsc">날짜 오래된순</option>
+        <option value="added">보관한 순서</option>
+      </select>
+    </div>
+    <section class="card" style="padding: 0;" id="list"></section>
+  </main>
+</div>
+
+<!-- 쪽지 상세/수정 -->
+<dialog id="dlgNote">
+  <div class="dhead">
+    <button class="star ghost" id="dStar" style="font-size:20px">★</button>
+    <h2 id="dHeading">쪽지</h2>
+    <button class="ghost" id="dClose">✕</button>
+  </div>
+  <div class="dbody">
+    <div><label>제목</label><input id="dTitle"></div>
+    <div class="grid2">
+      <div><label>보낸사람</label><input id="dSender"></div>
+      <div><label>날짜</label><input id="dDate" type="date"></div>
+    </div>
+    <div class="grid2">
+      <div><label>분류</label><select id="dCat"></select></div>
+      <div><label>태그 (쉼표나 엔터로 추가)</label><input id="dTags" placeholder="태그 추가"></div>
+    </div>
+    <div>
+      <div class="texthead">
+        <label>내용</label>
+        <button type="button" id="dSmaller" title="글자 작게">가−</button>
+        <button type="button" id="dBigger" title="글자 크게">가+</button>
+        <button type="button" id="dTidy" title="빈 줄·공백 정리">✨ 정리</button>
+        <button type="button" id="dEdit">✏️ 수정</button>
+      </div>
+      <div class="readview" id="dView"></div>
+      <textarea id="dText" rows="12" hidden></textarea>
+    </div>
+    <div><label>메모 (나만 보는 메모)</label><textarea id="dMemo" rows="2"></textarea></div>
+    <div>
+      <label>첨부파일</label>
+      <div class="attlist" id="dAtts"></div>
+      <div class="drop" id="dDrop">📎 파일 추가 (끌어다 놓기, 클릭, Ctrl+V)</div>
+      <input type="file" id="dFiles" multiple hidden>
+    </div>
+  </div>
+  <div class="dfoot">
+    <button id="dDelete">🗑 삭제</button>
+    <button id="dCopy">📋 내용 복사</button>
+    <span class="spacer"></span>
+    <button id="dCancel">닫기</button>
+    <button class="primary" id="dSave">저장</button>
+  </div>
+</dialog>
+
+<!-- 분류 규칙 -->
+<dialog id="dlgRules">
+  <div class="dhead">
+    <h2>분류 규칙</h2>
+    <button class="ghost" id="rClose">✕</button>
+  </div>
+  <div class="dbody">
+    <div class="hint">
+      쪽지 내용에 키워드가 많이 들어있는 분류로 자동 추천돼요. 키워드는 쉼표로 구분하세요.<br>
+      예) 교육·훈련 → 교육, 훈련, 연습, 이수, 강의
+    </div>
+    <div id="rList"></div>
+    <div><button id="rAdd">+ 분류 추가</button></div>
+    <label style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+      <input type="checkbox" id="rReapply" style="width:auto"> 저장할 때 기존 쪽지도 새 규칙으로 다시 분류하기 (직접 고른 분류는 유지)
+    </label>
+  </div>
+  <div class="dfoot">
+    <button id="rReset">기본값으로</button>
+    <span class="spacer"></span>
+    <button id="rCancel">취소</button>
+    <button class="primary" id="rSave">저장</button>
+  </div>
+</dialog>
+
+<dialog id="dlgForm"></dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== 저장소 ===================== */
+const KEY = 'jjokji-box-v1';
+const DEFAULT_CATS = [
+  { id: 'c1', name: '출동·재난', color: '#d9381e', keywords: '출동, 화재, 구조, 구급, 재난, 상황, 비상, 대응, 사고, 현장' },
+  { id: 'c2', name: '교육·훈련', color: '#2f6fd6', keywords: '교육, 훈련, 연습, 이수, 강의, 평가, 자격, 시험, 직무' },
+  { id: 'c3', name: '인사·복무', color: '#7a4fd0', keywords: '인사, 발령, 전보, 승진, 휴가, 연가, 복무, 근무, 당직, 교대, 출장' },
+  { id: 'c4', name: '공문·지시', color: '#1f8a5b', keywords: '공문, 시행, 지시, 보고, 제출, 기한, 협조, 회신, 문서, 결재' },
+  { id: 'c5', name: '행사·회의', color: '#c27a00', keywords: '회의, 행사, 일정, 참석, 간담회, 워크숍, 세미나, 회식' },
+  { id: 'c6', name: '장비·차량', color: '#4b6b82', keywords: '장비, 차량, 점검, 정비, 소방차, 펌프, 공기호흡기, 보급, 물품' },
+];
+const ETC = { id: 'etc', name: '기타', color: '#8a8f98', keywords: '' };
+
+/* ===================== 계정 · 암호화 ===================== */
+// 쪽지와 첨부는 비밀번호로 암호화해서 저장해요. 비밀번호 자체는 어디에도 저장하지 않아요.
+// 비밀번호 → (PBKDF2) → 잠금열쇠, 무작위 '데이터 열쇠'를 잠금열쇠로 잠가서 보관하고 쪽지·첨부는 데이터 열쇠로 암호화.
+// 그래서 비밀번호를 바꿔도 첨부파일을 다시 암호화할 필요가 없어요.
+const LEGACY_KEY = 'jjokji-box-v1';   // 로그인 기능 전 (암호화 안 된) 데이터
+const USER_PREFIX = 'jjokji-user:';
+const ITER = 600000;
+const ENCRYPT_ATTS = true;            // 첨부파일도 암호화
+const AUTO_LOCK_MIN = 10;
+
+const te = new TextEncoder(), td = new TextDecoder();
+function toB64(u8) {
+  let s = '';
+  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function fromB64(str) {
+  const bin = atob(str), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8;
+}
+async function deriveKek(pw, salt, iter) {
+  const base = await crypto.subtle.importKey('raw', te.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base,
+    { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function encBytes(key, u8) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, u8));
+  const out = new Uint8Array(12 + ct.length);
+  out.set(iv); out.set(ct, 12);
+  return out;
+}
+async function decBytes(key, u8) {
+  return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u8.subarray(0, 12) }, key, u8.subarray(12)));
+}
+const encText = async (key, str) => toB64(await encBytes(key, te.encode(str)));
+const decText = async (key, b64) => td.decode(await decBytes(key, fromB64(b64)));
+const importDek = raw => crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
+
+const emptyDb = () => ({ notes: [], cats: structuredClone(DEFAULT_CATS), lastBackup: null });
+const normDb = d => ({ notes: d.notes || [], cats: d.cats || structuredClone(DEFAULT_CATS), lastBackup: d.lastBackup || null });
+const userKey = name => USER_PREFIX + name;
+const listUsers = () => Object.keys(localStorage).filter(k => k.startsWith(USER_PREFIX)).map(k => k.slice(USER_PREFIX.length)).sort();
+function readUser(name) { try { return JSON.parse(localStorage.getItem(userKey(name))); } catch { return null; } }
+const writeUser = (name, rec) => localStorage.setItem(userKey(name), JSON.stringify(rec));
+
+let me = null;      // 로그인한 사용자 { name, key }
+let db = emptyDb();
+
+async function unwrapRaw(rec, pw) {
+  const kek = await deriveKek(pw, fromB64(rec.salt), rec.iter);
+  try { return await decBytes(kek, fromB64(rec.wrapped)); }
+  catch { throw new Error('비밀번호가 맞지 않아요.'); }
+}
+async function wrapKey(raw, pw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const kek = await deriveKek(pw, salt, ITER);
+  return { salt: toB64(salt), iter: ITER, wrapped: toB64(await encBytes(kek, raw)) };
+}
+
+let saving = Promise.resolve();
+function save() {
+  if (!me) return saving;
+  const json = JSON.stringify(db), who = me;
+  saving = saving.then(async () => {
+    const data = await encText(who.key, json);
+    const rec = readUser(who.name);   // 암호화가 끝난 뒤에 읽어야 비밀번호 변경과 안 겹침
+    rec.data = data;
+    writeUser(who.name, rec);
+  }).catch(e => alert('저장에 실패했어요. 백업 파일로 저장해두세요.\n' + e.message));
+  return saving;
+}
+
+/* ===================== 도우미 ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const today = () => new Date().toISOString().slice(0, 10);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const allCats = () => [...db.cats, ETC];
+const catOf = id => allCats().find(c => c.id === id) || ETC;
+const splitTags = s => [...new Set(String(s || '').split(/[,，#]/).map(t => t.trim()).filter(Boolean))];
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* 키워드 점수로 분류 추천 */
+function classify(text) {
+  let best = null, bestScore = 0, hits = [];
+  for (const c of db.cats) {
+    let score = 0, found = [];
+    for (const kw of splitTags(c.keywords)) {
+      const n = text.split(kw).length - 1;
+      if (n) { score += n; found.push(kw); }
+    }
+    if (score > bestScore) { best = c; bestScore = score; hits = found; }
+  }
+  return { cat: best || ETC, hits };
+}
+
+/* 붙여넣은 글에서 보낸사람·날짜 추측 */
+const RANKS = '소방총감|소방정감|소방감|소방준감|소방정|소방령|소방경|소방위|소방장|소방교|소방사|주무관|팀장|센터장|대장|계장|과장|서장|반장|담당';
+function guessSender(text) {
+  // 1) 머리글을 같이 복사한 경우: "보낸 사람 : 홍길동 [부서 연락처]"
+  const m = text.match(/(?:보낸\s*사람|보낸이|발신자?|From)\s*[:：]\s*([^\n\r]+)/i);
+  if (m) {
+    const line = m[1].trim(), b = line.match(/^([^\[(]+?)\s*[\[(]\s*([^\])]*)/);
+    if (b) {   // "홍길동 [복무서무 ○○소방서 소방행정과 055-...]" → "홍길동 (소방행정과)"
+      const dept = (b[2].match(/[가-힣]+(?:과|팀|센터|대|계|실|단)(?=\s|$)/g) || []).pop();
+      return (b[1].trim() + (dept ? ` (${dept})` : '')).slice(0, 40);
+    }
+    return line.slice(0, 40);
+  }
+  // 2) 본문만 복사한 경우: 인사말 "소방행정과 소방교 홍길동입니다"
+  const g = text.match(new RegExp(`(?:([0-9가-힣]+(?:과|팀|센터|구조대|대|계|실|단))\\s*)?(${RANKS})\\s*([가-힣]{2,4})\\s*(?:입니다|이에요|예요|올림|드림)`))
+    || text.match(/([0-9가-힣]+(?:과|팀|센터|구조대|계|실|단))\s+([가-힣]{2,4})\s*(?:입니다|올림|드림)/);
+  if (g) {
+    if (g.length === 4) return `${g[3]} (${[g[1], g[2]].filter(Boolean).join(' ')})`;
+    return `${g[2]} (${g[1]})`;
+  }
+  return '';
+}
+function guessDate(text) {
+  const m = text.match(/(20\d{2})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/);
+  if (!m) return '';
+  const [y, mo, d] = [m[1], m[2].padStart(2, '0'), m[3].padStart(2, '0')];
+  return (+mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31) ? `${y}-${mo}-${d}` : '';
+}
+function guessTitle(text) {
+  const m = text.match(/(?:제\s*목|Subject)\s*[:：]\s*([^\n\r]+)/i);
+  if (m) return m[1].trim().slice(0, 80);
+  const first = text.split(/\r?\n/).map(l => l.trim()).find(l => l
+    && !/^(보낸|받는|발신|수신|날짜|일시|작성|From|To)/i.test(l)
+    && !/^[\d\s.\-\/:년월일()오전후APM]+$/.test(l)
+    && !/^(안녕하(십니까|세요)|수고\s*(가\s*)?많으십니다|수고하십니다|좋은\s*아침)/.test(l));   // 인사말 줄은 건너뜀
+  const any = text.split(/\r?\n/).map(l => l.trim()).find(Boolean);
+  return (first || any || '제목 없음').slice(0, 60);
+}
+
+/* 붙여넣은 본문 정리: 줄바꿈 통일, 보이지 않는 문자 제거, 줄 끝 공백 제거,
+   한 줄 걸러 빈 줄이 들어간 '두 줄 간격'은 한 줄로, 빈 줄 여러 개는 하나로 */
+function tidyText(t) {
+  let lines = String(t)
+    .replace(/\r\n?/g, '\n')
+    .replace(/[​-‍⁠﻿]/g, '')
+    .replace(/[ 　]/g, ' ')
+    .replace(/\t/g, '    ')
+    .split('\n').map(l => l.replace(/\s+$/, ''));
+  // 모든 줄 앞에 공통으로 붙은 들여쓰기 제거
+  const ind = Math.min(...lines.filter(l => l.trim()).map(l => l.match(/^ */)[0].length));
+  if (ind > 0 && isFinite(ind)) lines = lines.map(l => l.slice(ind));
+  // 두 줄 간격: 글줄 사이마다 빈 줄이 정확히 하나씩이면 빈 줄을 뺌
+  const text = lines.filter(l => l.trim());
+  let gaps = 0, singles = 0;
+  for (let i = 1; i < lines.length - 1; i++) {
+    if (!lines[i].trim() && lines[i - 1].trim() && lines[i + 1].trim()) singles++;
+  }
+  for (let i = 1; i < lines.length; i++) if (lines[i].trim() && lines[i - 1].trim()) gaps++;
+  if (text.length >= 4 && singles >= text.length - 2 && gaps === 0) lines = text;
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/* 태그 입력칸을 배지 방식으로 바꿔주는 도우미 */
+function makeTagInput(input) {
+  const box = document.createElement('div');
+  box.className = 'taginput';
+  input.replaceWith(box);
+  box.appendChild(input);
+  let tags = [];
+  const hint = input.placeholder;
+
+  function draw() {
+    input.placeholder = tags.length ? '' : hint;
+    box.querySelectorAll('.chip').forEach(c => c.remove());
+    tags.forEach((t, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.innerHTML = `#${esc(t)}<button type="button" title="태그 빼기">×</button>`;
+      chip.querySelector('button').onclick = e => { e.stopPropagation(); tags.splice(i, 1); draw(); input.focus(); };
+      box.insertBefore(chip, input);
+    });
+  }
+  function commit() {
+    const fresh = splitTags(input.value).filter(t => !tags.includes(t));
+    if (fresh.length) { tags.push(...fresh); draw(); }
+    input.value = '';
+  }
+
+  // 쉼표는 한글 입력 중에도 들어오도록 input 이벤트에서 처리
+  input.addEventListener('input', () => {
+    if (/[,，]/.test(input.value)) {
+      const parts = input.value.split(/[,，]/);
+      const rest = parts.pop();
+      input.value = parts.join(',');
+      commit();
+      input.value = rest.trimStart();
+    }
+  });
+  input.addEventListener('keydown', e => {
+    if (e.isComposing) return;
+    if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && input.value.trim()) { e.preventDefault(); commit(); }
+    if (e.key === 'Backspace' && !input.value && tags.length) { tags.pop(); draw(); }
+  });
+  input.addEventListener('blur', commit);
+  box.addEventListener('click', () => input.focus());
+
+  return {
+    get: () => { commit(); return [...tags]; },
+    set: list => { tags = [...(list || [])]; input.value = ''; draw(); },
+  };
+}
+const pTagBox = makeTagInput($('#pTags'));
+const dTagBox = makeTagInput($('#dTags'));
+
+/* ===================== 첨부파일 ===================== */
+// 실제 파일은 내가 고른 PC 폴더에 '분류/날짜_제목/파일' 로 저장.
+// 폴더를 아직 안 골랐거나 못 쓰면 브라우저(IndexedDB)에 임시 보관했다가, 폴더를 연결하면 옮김.
+const FS_OK = 'showDirectoryPicker' in window;
+let folder = null;        // 연결된 폴더
+let folderReady = false;  // 쓰기 허용까지 받은 상태
+
+function idb() {
+  return idb.p ||= new Promise((ok, no) => {
+    const r = indexedDB.open('jjokji-box', 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore('kv'); r.result.createObjectStore('files'); };
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => no(r.error);
+  });
+}
+async function idbDo(store, mode, fn) {
+  const d = await idb();
+  return new Promise((ok, no) => {
+    const tx = d.transaction(store, mode);
+    const req = fn(tx.objectStore(store));
+    tx.oncomplete = () => ok(req.result);
+    tx.onerror = () => no(tx.error);
+  });
+}
+const idbGet = (store, k) => idbDo(store, 'readonly', st => st.get(k));
+const idbPut = (store, k, v) => idbDo(store, 'readwrite', st => st.put(v, k));
+const idbDel = (store, k) => idbDo(store, 'readwrite', st => st.delete(k));
+
+const safeName = (s, max = 60) =>
+  String(s).replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').replace(/\s+/g, ' ').trim().slice(0, max).replace(/[. ]+$/, '') || '이름없음';
+const fmtSize = b => b < 1024 ? b + 'B' : b < 1048576 ? Math.round(b / 1024) + 'KB' : (b / 1048576).toFixed(1) + 'MB';
+const tempCount = () => db.notes.reduce((n, x) => n + (x.atts || []).filter(a => a.where === 'temp').length, 0);
+
+async function getDir(root, parts, create) {
+  let d = root;
+  for (const p of parts) d = await d.getDirectoryHandle(p, { create });
+  return d;
+}
+async function uniqueName(dir, name) {
+  const dot = name.lastIndexOf('.');
+  const base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+  for (let i = 1; ; i++) {
+    const n = i === 1 ? name : `${base} (${i})${ext}`;
+    try { await dir.getFileHandle(n); } catch { return n; }
+  }
+}
+async function writeFile(parts, name, blob) {
+  const dir = await getDir(folder, parts, true);
+  const fname = await uniqueName(dir, name);
+  const w = await (await dir.getFileHandle(fname, { create: true })).createWritable();
+  await w.write(blob);
+  await w.close();
+  return [...parts, fname].join('/');
+}
+// 암호화한 첨부는 제목·파일 이름은 숨기고 날짜·분류만 보이게
+// 예) 잠금첨부/2026년/10월/10-14_공문·지시.enc  (같은 이름이 있으면 '(2)'가 붙음)
+const folderSpot = (note, att) => {
+  if (!att.enc) return [[safeName(catOf(note.cat).name), safeName(`${note.date || today()}_${note.title}`)], safeName(att.name, 120)];
+  const [y, m, d] = (note.date || today()).split('-');
+  return [['잠금첨부', `${y}년`, `${+m}월`], `${m}-${d}_${safeName(catOf(note.cat).name, 20)}.enc`];
+};
+
+async function storeAttachment(note, file) {
+  const att = { id: uid(), name: file.name, size: file.size, type: file.type };
+  let blob = file;
+  if (ENCRYPT_ATTS) {
+    blob = new Blob([await encBytes(me.key, new Uint8Array(await file.arrayBuffer()))]);
+    att.enc = true;
+  }
+  if (folderReady) {
+    try {
+      const [parts, name] = folderSpot(note, att);
+      att.path = await writeFile(parts, name, blob);
+      att.where = 'folder';
+      return att;
+    } catch (e) { console.warn(e); toast('폴더 저장에 실패해서 브라우저에 임시 보관해요'); }
+  }
+  await idbPut('files', att.id, blob);
+  att.where = 'temp';
+  return att;
+}
+async function readAttachment(att) {
+  let blob;
+  if (att.where === 'folder') {
+    if (!folderReady) throw new Error('첨부 폴더 접근 허용이 필요해요. 위쪽의 [허용하기]를 눌러주세요.');
+    const parts = att.path.split('/'), name = parts.pop();
+    blob = await (await (await getDir(folder, parts, false)).getFileHandle(name)).getFile();
+  } else {
+    blob = await idbGet('files', att.id);
+    if (!blob) throw new Error('파일을 찾을 수 없어요.');
+  }
+  if (!att.enc) return blob;
+  try {
+    const plain = await decBytes(me.key, new Uint8Array(await blob.arrayBuffer()));
+    return new File([plain], att.name, { type: att.type });
+  } catch { throw new Error('첨부파일을 풀 수 없어요. 다른 사용자의 파일이거나 파일이 손상됐어요.'); }
+}
+async function deleteAttachment(att) {
+  if (att.where === 'temp') return idbDel('files', att.id);
+  if (!folderReady) throw new Error('첨부 폴더 접근 허용이 필요해요.');
+  const parts = att.path.split('/'), name = parts.pop();
+  const dir = await getDir(folder, parts, false);
+  await dir.removeEntry(name);
+}
+async function openAttachment(att) {
+  try {
+    const f = await readAttachment(att);
+    const url = URL.createObjectURL(f);
+    if (/^(image\/|application\/pdf|text\/)/.test(f.type || att.type)) window.open(url, '_blank');
+    else { const a = document.createElement('a'); a.href = url; a.download = att.name; a.click(); }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) { alert(e.message); }
+}
+async function moveTempToFolder() {
+  let moved = 0;
+  for (const n of db.notes) for (const a of n.atts || []) {
+    if (a.where !== 'temp') continue;
+    try {
+      const f = await idbGet('files', a.id);
+      if (!f) continue;
+      const [parts, name] = folderSpot(n, a);
+      a.path = await writeFile(parts, name, f);
+      a.where = 'folder';
+      await idbDel('files', a.id);
+      moved++;
+    } catch (e) { console.warn(e); }
+  }
+  if (moved) { save(); renderAll(); toast(`임시 보관하던 첨부 ${moved}개를 폴더로 옮겼어요`); }
+}
+
+async function useFolder(handle) {
+  folder = handle;
+  try { await idbPut('kv', 'folder:' + me.name, handle); } catch (e) { console.warn(e); }
+  folderReady = (await handle.queryPermission({ mode: 'readwrite' })) === 'granted';
+  if (folderReady) await moveTempToFolder();
+  renderFolder();
+}
+async function restoreFolder() {
+  if (FS_OK) {
+    try {
+      const h = await idbGet('kv', 'folder:' + me.name);
+      if (h) { folder = h; folderReady = (await h.queryPermission({ mode: 'readwrite' })) === 'granted'; }
+    } catch (e) { console.warn(e); }
+  }
+  renderFolder();
+}
+// 브라우저 규칙상 버튼을 눌렀을 때만 폴더 선택/허용 창을 띄울 수 있음
+async function connectFolder() {
+  if (!FS_OK) {
+    alert('이 브라우저는 폴더 저장을 지원하지 않아요. 크롬이나 엣지에서 열어주세요.\n지금은 첨부파일이 브라우저 안에 임시 보관돼요.');
+    return;
+  }
+  try {
+    if (folder && !folderReady) {
+      if ((await folder.requestPermission({ mode: 'readwrite' })) === 'granted') {
+        folderReady = true; await moveTempToFolder(); renderFolder();
+        toast(`'${folder.name}' 폴더를 다시 연결했어요`);
+      }
+      return;
+    }
+    if (folder && !confirm(`지금 연결된 폴더: ${folder.name}\n\n다른 폴더로 바꿀까요?\n(이미 저장된 첨부는 지금 폴더에 있으니, 바꾸려면 지금 폴더 안의 내용을 새 폴더로 복사해 주세요)`)) return;
+    const h = await window.showDirectoryPicker({ id: 'jjokji', mode: 'readwrite' });
+    await useFolder(h);
+    toast(`'${h.name}' 폴더에 연결했어요`);
+  } catch (e) { if (e.name !== 'AbortError') alert('폴더 연결 실패: ' + e.message); }
+}
+
+function renderFolder() {
+  const btn = $('#btnFolder'), el = $('#folderBanner'), temp = tempCount();
+  btn.classList.toggle('warn', !!folder && !folderReady);
+  btn.textContent = !FS_OK ? '📎 브라우저 보관' : !folder ? '📁 첨부 폴더 연결' : folderReady ? '📁 폴더 바꾸기' : '📁 허용하기';
+  // 연결 상태 표시 (보안상 브라우저는 폴더 이름까지만 알려줘요. C:\... 전체 경로는 알 수 없음)
+  const st = $('#folderStatus');
+  const state = !FS_OK ? ['', '첨부: 이 브라우저 안에 보관 중'] : !folder ? ['', '첨부 폴더 연결 안 됨']
+    : folderReady ? ['ok', `첨부 폴더 <b>${esc(folder.name)}</b> 연결됨`] : ['warn', `<b>${esc(folder.name)}</b> 허용 필요`];
+  st.className = 'fstat ' + state[0];
+  st.innerHTML = `<span class="dot"></span><span>${state[1]}</span>`;
+  st.title = folder ? `첨부파일이 '${folder.name}' 폴더 안에 저장돼요. (브라우저 보안 때문에 전체 경로는 표시할 수 없어요)` : '';
+  let msg = '', label = '';
+  if (folder && !folderReady) { msg = `첨부파일을 열거나 저장하려면 '${esc(folder.name)}' 폴더 접근을 허용해 주세요. (브라우저를 새로 열 때마다 한 번)`; label = '허용하기'; }
+  else if (FS_OK && !folder && temp) { msg = `첨부파일 ${temp}개가 브라우저에 임시 보관 중이에요. 첨부 폴더를 연결하면 PC 폴더로 옮겨드려요.`; label = '폴더 연결'; }
+  el.innerHTML = msg ? `<div class="banner">📁 ${msg} <button id="folderBannerBtn">${label}</button></div>` : '';
+  if (msg) $('#folderBannerBtn').onclick = connectFolder;
+}
+$('#btnFolder').onclick = connectFolder;
+
+function attRows(atts, { paths = false } = {}) {
+  return (atts || []).map((a, i) => `
+    <div class="att" title="${esc(a.path || a.name)}">
+      <span>📄</span>
+      ${a.id ? `<a href="#" data-open="${i}">${esc(a.name)}</a>` : `<span>${esc(a.name)}</span>`}
+      <span class="sz">${fmtSize(a.size)}</span>
+      ${a.where === 'temp' ? '<span class="tmp">브라우저 임시 보관</span>' : ''}
+      ${paths && a.path ? `<span class="path">📁 ${esc((folder ? folder.name + '/' : '') + a.path)}</span>` : ''}
+      <button type="button" data-rm="${i}" title="첨부 빼기">×</button>
+    </div>`).join('');
+}
+// 메신저에서 끌어온 파일은 (1) 메신저가 아직 다 받기 전이거나 (2) 금방 지워버려서 못 읽는 경우가 있어요.
+// 그래서 놓는 즉시 읽고, 실패하면 파일 위치(handle)로 몇 초 동안 다시 읽어 봐요. 읽은 내용은 메모리에 복사해 둬요.
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function readNow(f) { return new File([await f.arrayBuffer()], f.name, { type: f.type, lastModified: f.lastModified }); }
+async function grabFiles(files, handles = []) {
+  const ok = [], bad = [];
+  let waited = false;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    try { ok.push(await readNow(f)); continue; } catch (e) { console.warn('첫 읽기 실패', f.name, e); }
+    const h = await Promise.resolve(handles[i]).catch(() => null);
+    let got = null;
+    if (h && h.kind === 'file') {
+      if (!waited) { toast('메신저에서 파일을 받는 중이에요…'); waited = true; }
+      let prev = -1, same = 0;
+      for (let t = 0; t < 30 && !got; t++) {   // 최대 약 15초, 1초 동안 크기가 그대로면(다 받았으면) 읽기
+        await sleep(500);
+        try {
+          const fresh = await h.getFile();
+          same = fresh.size > 0 && fresh.size === prev ? same + 1 : 0;
+          prev = fresh.size;
+          if (same >= 2) got = await readNow(fresh);
+        } catch {}
+      }
+    }
+    if (got) ok.push(new File([got], f.name, { type: f.type || got.type }));
+    else bad.push(f.name);
+  }
+  if (bad.length) alert(`이 파일은 읽을 수 없었어요: ${bad.join(', ')}\n\n메신저에서 먼저 다운로드한 다음, 받은 파일을 끌어다 놓아 주세요.`);
+  return ok;
+}
+function makeDrop(zone, input, onFiles) {
+  const take = async (files, handles) => { const ok = await grabFiles(files, handles); if (ok.length) onFiles(ok); };
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => { const f = [...input.files]; input.value = ''; if (f.length) take(f); });
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('over');
+    // 파일 위치(handle)는 놓는 그 순간에만 받을 수 있어서 바로 챙겨둬요
+    const items = [...e.dataTransfer.items].filter(it => it.kind === 'file');
+    const handles = items.map(it => it.getAsFileSystemHandle ? it.getAsFileSystemHandle().catch(() => null) : null);
+    const f = items.map(it => it.getAsFile()).filter(Boolean);
+    if (f.length) take(f, handles);
+  });
+}
+// 드롭 영역 밖에 파일을 떨어뜨려도 브라우저가 파일을 열어버리지 않게
+['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
+
+/* ===================== 상태 ===================== */
+const ui = { cat: 'all', tags: new Set(), q: '', sort: 'date' };
+
+/* ===================== 렌더링 ===================== */
+function renderCatSelect(sel, value) {
+  sel.innerHTML = allCats().map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  sel.value = value;
+}
+
+function renderSide() {
+  const count = id => db.notes.filter(n => id === 'star' ? n.star : n.cat === id).length;
+  const row = (id, name, color, n) =>
+    `<div class="cat ${ui.cat === id ? 'active' : ''}" data-cat="${id}">
+       <span>${color ? `<span class="dot" style="background:${color}"></span>` : ''}${esc(name)}</span>
+       <span class="n">${n}</span></div>`;
+  let html = row('all', '📁 전체', null, db.notes.length) + row('star', '⭐ 중요', null, count('star'));
+  html += '<h3>분류</h3>';
+  html += allCats().map(c => row(c.id, c.name, c.color, count(c.id))).join('');
+
+  const tagCount = {};
+  db.notes.forEach(n => (n.tags || []).forEach(t => tagCount[t] = (tagCount[t] || 0) + 1));
+  const tags = Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]);
+  if (tags.length) {
+    html += '<h3>태그</h3><div class="tagcloud">' +
+      tags.map(t => `<span class="tag ${ui.tags.has(t) ? 'on' : ''}" data-tag="${esc(t)}">#${esc(t)}</span>`).join('') +
+      '</div>';
+  }
+  $('#side').innerHTML = html;
+}
+
+function highlight(text, q) {
+  const safe = esc(text);
+  if (!q) return safe;
+  const words = q.split(/\s+/).filter(Boolean).map(w => esc(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return words.length ? safe.replace(new RegExp(`(${words.join('|')})`, 'gi'), '<mark>$1</mark>') : safe;
+}
+
+function filtered() {
+  const words = ui.q.toLowerCase().split(/\s+/).filter(Boolean);
+  let list = db.notes.filter(n => {
+    if (ui.cat === 'star' && !n.star) return false;
+    if (ui.cat !== 'all' && ui.cat !== 'star' && n.cat !== ui.cat) return false;
+    for (const t of ui.tags) if (!(n.tags || []).includes(t)) return false;
+    if (words.length) {
+      const hay = [n.title, n.text, n.sender, n.memo, (n.tags || []).join(' '), (n.atts || []).map(a => a.name).join(' ')].join(' ').toLowerCase();
+      return words.every(w => hay.includes(w));
+    }
+    return true;
+  });
+  const byDate = (a, b) => (a.date || '').localeCompare(b.date || '') || a.added - b.added;
+  if (ui.sort === 'date') list.sort((a, b) => byDate(b, a));
+  if (ui.sort === 'dateAsc') list.sort(byDate);
+  if (ui.sort === 'added') list.sort((a, b) => b.added - a.added);
+  return list;
+}
+
+function previewOf(n) {
+  const words = ui.q.split(/\s+/).filter(Boolean);
+  const flat = n.text.replace(/\s+/g, ' ');
+  if (words.length) {
+    const i = flat.toLowerCase().indexOf(words[0].toLowerCase());
+    if (i > 30) return '…' + flat.slice(i - 20, i + 120);
+  }
+  return flat.slice(0, 140);
+}
+
+function renderList() {
+  const list = filtered();
+  const title = ui.cat === 'all' ? '전체' : ui.cat === 'star' ? '중요' : catOf(ui.cat).name;
+  $('#listTitle').textContent = title + (ui.tags.size ? ' · ' + [...ui.tags].map(t => '#' + t).join(' ') : '');
+  $('#listCount').textContent = `${list.length}개`;
+
+  if (!db.notes.length) {
+    $('#list').innerHTML = `<div class="empty">아직 보관한 쪽지가 없어요.<br>위 칸에 쪽지 내용을 붙여넣어 보세요.</div>`;
+    return;
+  }
+  if (!list.length) {
+    $('#list').innerHTML = `<div class="empty">조건에 맞는 쪽지가 없어요.</div>`;
+    return;
+  }
+  $('#list').innerHTML = list.map(n => {
+    const c = catOf(n.cat);
+    return `<div class="item" data-id="${n.id}">
+      <button class="star ${n.star ? 'on' : ''}" data-star="${n.id}" title="중요 표시">★</button>
+      <div class="body">
+        <div class="meta">
+          <span class="badge" style="background:${c.color}">${esc(c.name)}</span>
+          <span>${esc(n.date || '')}</span>
+          ${n.sender ? `<span>· ${highlight(n.sender, ui.q)}</span>` : ''}
+          ${(n.atts || []).length ? `<span title="${esc(n.atts.map(a => a.name).join(', '))}">📎 ${n.atts.length}</span>` : ''}
+          ${(n.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join(' ')}
+        </div>
+        <div class="title">${highlight(n.title, ui.q)}</div>
+        <div class="preview">${highlight(previewOf(n), ui.q)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBanner() {
+  const el = $('#backupBanner');
+  const days = db.lastBackup ? Math.floor((Date.now() - db.lastBackup) / 86400000) : null;
+  if (db.notes.length >= 5 && (days === null || days >= 7)) {
+    el.innerHTML = `<div class="banner">💡 ${days === null ? '아직 백업한 적이 없어요.' : days + '일 동안 백업하지 않았어요.'}
+      브라우저 기록을 지우면 쪽지도 사라지니 가끔 백업 파일로 저장해두세요.
+      <button id="bannerBackup">지금 백업</button></div>`;
+    $('#bannerBackup').onclick = exportJson;
+  } else el.innerHTML = '';
+}
+
+function renderAll() { renderSide(); renderList(); renderBanner(); renderFolder(); }
+
+/* ===================== 새 쪽지 입력 ===================== */
+let catTouched = false;
+function updateGuess() {
+  const text = $('#pText').value;
+  updateGuess.tidyNote();
+  if (!text.trim()) { $('#pGuess').textContent = '붙여넣으면 분류를 자동으로 추천해요.'; return; }
+  const { cat, hits } = classify(text);
+  if (!catTouched) $('#pCat').value = cat.id;
+  $('#pGuess').innerHTML = hits.length
+    ? `추천 분류: <b>${esc(cat.name)}</b> (키워드: ${hits.slice(0, 5).map(esc).join(', ')})`
+    : '맞는 키워드가 없어서 <b>기타</b>로 추천해요. 직접 골라도 돼요.';
+}
+$('#pText').addEventListener('input', updateGuess);
+let pRaw = null;   // 정리하기 전 원문 (되돌리기용)
+$('#pText').addEventListener('paste', () => setTimeout(() => {
+  const raw = $('#pText').value, tidy = tidyText(raw);
+  pShowRaw = false;
+  if (tidy !== raw.trim()) { pRaw = raw; $('#pText').value = tidy; }
+  else pRaw = null;
+  const text = $('#pText').value;
+  if (!$('#pSender').value) $('#pSender').value = guessSender(text);
+  const d = guessDate(text); if (d) $('#pDate').value = d;
+  updateGuess();
+}, 0));
+$('#pCat').addEventListener('change', () => catTouched = true);
+// '빈 줄·공백을 정리했어요 · 원래대로' 안내
+// 정리됨 ↔ 원래대로 를 몇 번이든 오갈 수 있게, 직접 친 글도 정리할 게 있으면 [정리하기] 표시
+let pShowRaw = false;
+updateGuess.tidyNote = () => {
+  let el = $('#pTidied');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'pTidied'; el.className = 'tidied';
+    $('#pText').after(el);
+  }
+  const cur = $('#pText').value;
+  if (pRaw && !pShowRaw && cur !== tidyText(pRaw)) pRaw = null;   // 정리한 뒤 직접 고쳤으면 되돌리기 기준 버림
+  if (pRaw && pShowRaw && cur !== pRaw) { pRaw = null; pShowRaw = false; }
+  let html = '';
+  if (pRaw && !pShowRaw) html = '✨ 빈 줄·공백을 깔끔하게 정리했어요 · <a href="#" data-t="raw">원래대로</a>';
+  else if (pRaw && pShowRaw) html = '정리하기 전 원래 내용이에요 · <a href="#" data-t="tidy">✨ 다시 정리</a>';
+  else if (cur.trim() && tidyText(cur) !== cur.trim()) html = '<a href="#" data-t="tidy">✨ 빈 줄·공백 정리하기</a>';
+  el.innerHTML = html;
+  el.querySelectorAll('[data-t]').forEach(a => a.onclick = e => {
+    e.preventDefault();
+    if (a.dataset.t === 'raw') { $('#pText').value = pRaw; pShowRaw = true; }
+    else { if (!pRaw) pRaw = $('#pText').value; $('#pText').value = tidyText(pRaw); pShowRaw = false; }
+    updateGuess();
+  });
+};
+
+let pFiles = [];
+function renderPFiles() { $('#pAtts').innerHTML = attRows(pFiles); }
+makeDrop($('#pDrop'), $('#pFiles'), files => { pFiles.push(...files); renderPFiles(); });
+$('#pAtts').addEventListener('click', e => {
+  const rm = e.target.closest('[data-rm]');
+  if (rm) { pFiles.splice(+rm.dataset.rm, 1); renderPFiles(); }
+});
+
+function resetPaste() {
+  pRaw = null; pShowRaw = false;
+  ['#pText', '#pTitle', '#pSender'].forEach(s => $(s).value = '');
+  pTagBox.set([]);
+  pFiles = []; renderPFiles();
+  $('#pDate').value = today();
+  catTouched = false;
+  renderCatSelect($('#pCat'), 'etc');
+  updateGuess();
+}
+$('#pClear').onclick = resetPaste;
+
+let adding = false;
+async function addNote() {
+  if (adding) return;
+  const text = $('#pText').value.trim();
+  if (!text) { toast('쪽지 내용을 먼저 붙여넣어 주세요'); $('#pText').focus(); return; }
+  const dup = db.notes.find(n => n.text === text);
+  if (dup && !confirm('똑같은 내용의 쪽지가 이미 있어요. 그래도 보관할까요?')) return;
+  const note = {
+    id: uid(),
+    title: $('#pTitle').value.trim() || guessTitle(text),
+    text,
+    sender: $('#pSender').value.trim(),
+    date: $('#pDate').value || today(),
+    cat: $('#pCat').value,
+    catManual: catTouched,
+    tags: pTagBox.get(),
+    star: false, memo: '', added: Date.now(), atts: [],
+  };
+  adding = true; $('#pSave').disabled = true;
+  try {
+    for (const f of pFiles) {
+      try { note.atts.push(await storeAttachment(note, f)); }
+      catch (e) { alert(`'${f.name}' 첨부 저장 실패: ${e.message}`); }
+    }
+  } finally { adding = false; $('#pSave').disabled = false; }
+  db.notes.push(note);
+  save(); resetPaste(); renderAll();
+  const temp = note.atts.filter(a => a.where === 'temp').length;
+  toast(note.atts.length ? `보관했어요 ✓ (첨부 ${note.atts.length}개${temp ? ', 브라우저 임시 보관' : ' 폴더에 저장'})` : '보관했어요 ✓');
+}
+$('#pSave').onclick = addNote;
+$('#pText').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addNote(); });
+
+// 탐색기에서 파일을 복사(Ctrl+C)한 뒤 앱에서 Ctrl+V 하면 첨부로 넣기
+document.addEventListener('paste', async e => {
+  if (!me) return;
+  const raw = [...(e.clipboardData?.files || [])];
+  if (!raw.length) return;   // 글자 붙여넣기는 원래대로
+  e.preventDefault();
+  const files = await grabFiles(raw);
+  if (!files.length) return;
+  if ($('#dlgNote').open) addToEditing(files);
+  else { pFiles.push(...files); renderPFiles(); toast(`첨부 ${files.length}개를 붙여넣었어요`); }
+});
+
+/* ===================== 목록 / 사이드바 ===================== */
+$('#side').addEventListener('click', e => {
+  const cat = e.target.closest('[data-cat]');
+  const tag = e.target.closest('[data-tag]');
+  if (cat) ui.cat = cat.dataset.cat;
+  if (tag) { const t = tag.dataset.tag; ui.tags.has(t) ? ui.tags.delete(t) : ui.tags.add(t); }
+  renderSide(); renderList();
+});
+$('#q').addEventListener('input', e => { ui.q = e.target.value.trim(); renderList(); });
+$('#sort').addEventListener('change', e => { ui.sort = e.target.value; renderList(); });
+$('#list').addEventListener('click', e => {
+  const s = e.target.closest('[data-star]');
+  if (s) {
+    const n = db.notes.find(n => n.id === s.dataset.star);
+    n.star = !n.star; save(); renderAll(); return;
+  }
+  const item = e.target.closest('.item');
+  if (item) openNote(item.dataset.id);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    e.preventDefault(); $('#q').focus();
+  }
+});
+
+/* ===================== 상세 보기 ===================== */
+let editing = null;
+function openNote(id) {
+  editing = db.notes.find(n => n.id === id);
+  if (!editing) return;
+  $('#dHeading').textContent = editing.title;
+  $('#dTitle').value = editing.title;
+  $('#dSender').value = editing.sender || '';
+  $('#dDate').value = editing.date || '';
+  renderCatSelect($('#dCat'), editing.cat);
+  dTagBox.set(editing.tags);
+  $('#dText').value = editing.text;
+  setEditMode(false);
+  $('#dMemo').value = editing.memo || '';
+  $('#dStar').style.color = editing.star ? 'var(--star)' : 'var(--line)';
+  renderDAtts();
+  $('#dlgNote').showModal();
+}
+/* 상세 창 본문: 평소엔 읽기 좋게 보여주고, ✏️ 수정을 누르면 고칠 수 있게 */
+let readSize = 15;
+try { readSize = +localStorage.getItem('jjokji-read-size') || 15; } catch {}
+function applyReadSize() {
+  document.documentElement.style.setProperty('--read-size', readSize + 'px');
+  try { localStorage.setItem('jjokji-read-size', readSize); } catch {}
+}
+applyReadSize();
+function setEditMode(on) {
+  $('#dText').hidden = !on;
+  $('#dView').hidden = on;
+  $('#dEdit').textContent = on ? '👁 보기' : '✏️ 수정';
+  if (!on) $('#dView').textContent = $('#dText').value;
+  else $('#dText').focus();
+}
+$('#dEdit').onclick = () => setEditMode($('#dText').hidden);
+$('#dSmaller').onclick = () => { readSize = Math.max(12, readSize - 1); applyReadSize(); };
+$('#dBigger').onclick = () => { readSize = Math.min(24, readSize + 1); applyReadSize(); };
+$('#dTidy').onclick = () => {
+  const before = $('#dText').value, after = tidyText(before);
+  if (after === before) { toast('이미 깔끔해요'); return; }
+  $('#dText').value = after;
+  if ($('#dText').hidden) $('#dView').textContent = after;
+  toast('정리했어요. 저장을 눌러야 반영돼요');
+};
+
+function renderDAtts() { $('#dAtts').innerHTML = attRows(editing.atts, { paths: true }); }
+const addToEditing = async files => {
+  editing.atts ||= [];
+  for (const f of files) {
+    try { editing.atts.push(await storeAttachment(editing, f)); }
+    catch (e) { alert(`'${f.name}' 첨부 저장 실패: ${e.message}`); }
+  }
+  save(); renderDAtts(); renderAll(); toast('첨부했어요');
+};
+makeDrop($('#dDrop'), $('#dFiles'), addToEditing);
+$('#dAtts').addEventListener('click', async e => {
+  const open = e.target.closest('[data-open]');
+  if (open) { e.preventDefault(); return openAttachment(editing.atts[+open.dataset.open]); }
+  const rm = e.target.closest('[data-rm]');
+  if (!rm) return;
+  const att = editing.atts[+rm.dataset.rm];
+  if (!confirm(`'${att.name}' 첨부를 뺄까요?\n${att.where === 'folder' ? '폴더에 저장된 파일도 함께 지워져요.' : ''}`)) return;
+  try { await deleteAttachment(att); }
+  catch (err) { if (!confirm(`파일을 지우지 못했어요 (${err.message}).\n쪽지에서 첨부 목록만 뺄까요?`)) return; }
+  editing.atts = editing.atts.filter(a => a !== att);
+  save(); renderDAtts(); renderAll();
+});
+$('#dStar').onclick = () => {
+  editing.star = !editing.star;
+  $('#dStar').style.color = editing.star ? 'var(--star)' : 'var(--line)';
+  save(); renderAll();
+};
+$('#dSave').onclick = () => {
+  if ($('#dCat').value !== editing.cat) editing.catManual = true;
+  Object.assign(editing, {
+    title: $('#dTitle').value.trim() || guessTitle($('#dText').value),
+    sender: $('#dSender').value.trim(),
+    date: $('#dDate').value,
+    cat: $('#dCat').value,
+    tags: dTagBox.get(),
+    text: $('#dText').value,
+    memo: $('#dMemo').value,
+  });
+  save(); renderAll(); $('#dlgNote').close(); toast('저장했어요');
+};
+$('#dDelete').onclick = async () => {
+  const atts = editing.atts || [];
+  if (!confirm(atts.length ? `이 쪽지와 첨부파일 ${atts.length}개를 삭제할까요? 되돌릴 수 없어요.` : '이 쪽지를 삭제할까요? 되돌릴 수 없어요.')) return;
+  let left = 0;
+  for (const a of atts) { try { await deleteAttachment(a); } catch { left++; } }
+  if (left) alert(`첨부파일 ${left}개는 지우지 못해서 폴더에 그대로 남아 있어요.`);
+  db.notes = db.notes.filter(n => n.id !== editing.id);
+  save(); renderAll(); $('#dlgNote').close(); toast('삭제했어요');
+};
+$('#dCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('#dText').value); toast('복사했어요'); }
+  catch { $('#dText').select(); document.execCommand('copy'); toast('복사했어요'); }
+};
+$('#dClose').onclick = $('#dCancel').onclick = () => $('#dlgNote').close();
+
+/* ===================== 분류 규칙 ===================== */
+let draftCats = [];
+function renderRules() {
+  $('#rList').innerHTML = draftCats.map((c, i) => `
+    <div class="rule" style="margin-bottom:6px">
+      <input type="color" value="${c.color}" data-i="${i}" data-k="color">
+      <input value="${esc(c.name)}" data-i="${i}" data-k="name" placeholder="분류 이름">
+      <input value="${esc(c.keywords)}" data-i="${i}" data-k="keywords" placeholder="키워드, 키워드, …">
+      <button class="ghost" data-del="${i}" title="분류 삭제">✕</button>
+    </div>`).join('') +
+    `<div class="hint">‘기타’는 항상 있어요. 분류를 삭제하면 그 안의 쪽지는 기타로 옮겨져요.</div>`;
+}
+$('#rList').addEventListener('input', e => {
+  const { i, k } = e.target.dataset;
+  if (i !== undefined) draftCats[i][k] = e.target.value;
+});
+$('#rList').addEventListener('click', e => {
+  const d = e.target.closest('[data-del]');
+  if (d) { draftCats.splice(+d.dataset.del, 1); renderRules(); }
+});
+$('#btnRules').onclick = () => {
+  draftCats = structuredClone(db.cats);
+  $('#rReapply').checked = false;
+  renderRules(); $('#dlgRules').showModal();
+};
+$('#rAdd').onclick = () => {
+  draftCats.push({ id: 'c' + uid(), name: '새 분류', color: '#3a86c8', keywords: '' });
+  renderRules();
+};
+$('#rReset').onclick = () => { draftCats = structuredClone(DEFAULT_CATS); renderRules(); };
+$('#rClose').onclick = $('#rCancel').onclick = () => $('#dlgRules').close();
+$('#rSave').onclick = () => {
+  db.cats = draftCats.filter(c => c.name.trim());
+  const ids = new Set(db.cats.map(c => c.id));
+  db.notes.forEach(n => { if (n.cat !== 'etc' && !ids.has(n.cat)) { n.cat = 'etc'; n.catManual = false; } });
+  if ($('#rReapply').checked) {
+    db.notes.forEach(n => { if (!n.catManual) n.cat = classify(n.title + '\n' + n.text).cat.id; });
+  }
+  save(); renderAll(); renderCatSelect($('#pCat'), $('#pCat').value); updateGuess();
+  $('#dlgRules').close(); toast('분류 규칙을 저장했어요');
+};
+
+/* ===================== 백업 / 불러오기 ===================== */
+// 백업 파일도 암호화된 그대로 저장 (열려면 비밀번호 필요)
+async function exportJson() {
+  db.lastBackup = Date.now();
+  await save();
+  const rec = readUser(me.name);
+  const out = { app: 'jjokji-box', version: 2, user: me.name, exported: new Date().toISOString(),
+    kid: rec.kid, salt: rec.salt, iter: rec.iter, wrapped: rec.wrapped, data: rec.data };
+  const blob = new Blob([JSON.stringify(out)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `쪽지보관함_백업_${safeName(me.name, 20)}_${today()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  renderBanner(); toast('백업 파일을 저장했어요');
+}
+$('#btnExport').onclick = exportJson;
+$('#btnImport').onclick = () => $('#fileImport').click();
+$('#fileImport').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    let data = JSON.parse(await f.text());
+    if (data.version === 2 && data.data) {
+      if (data.kid !== readUser(me.name).kid)
+        throw new Error('다른 사용자의 백업 파일이에요. 잠금 화면의 "백업 파일로 복구"를 이용해 주세요.');
+      data = normDb(JSON.parse(await decText(me.key, data.data)));
+    }
+    if (!Array.isArray(data.notes)) throw new Error('쪽지 보관함 백업 파일이 아니에요');
+    const have = new Set(db.notes.map(n => n.id));
+    const fresh = data.notes.filter(n => n && n.id && !have.has(n.id));
+    db.notes.push(...fresh);
+    if (Array.isArray(data.cats)) {
+      const catIds = new Set(db.cats.map(c => c.id));
+      data.cats.forEach(c => { if (!catIds.has(c.id)) db.cats.push(c); });
+    }
+    save(); renderAll();
+    toast(`${fresh.length}개 불러왔어요 (중복 ${data.notes.length - fresh.length}개 건너뜀)`);
+  } catch (err) { alert('불러오기 실패: ' + err.message); }
+};
+
+/* ===================== 로그인 · 잠금 ===================== */
+function legacyCount() {
+  try { return (JSON.parse(localStorage.getItem(LEGACY_KEY))?.notes || []).length; } catch { return 0; }
+}
+function showLock(mode = 'login') {
+  const users = listUsers();
+  let last = null;
+  try { last = localStorage.getItem('jjokji-last-user'); } catch {}
+  const legacyN = users.length ? 0 : legacyCount();
+  const tab = (m, label) => `<button type="button" class="ltab ${mode === m ? 'on' : ''}" data-mode="${m}">${label}</button>`;
+  let html = `<div class="lockbox"><h1>📮 쪽지 <span>보관함</span></h1>
+    <div class="ltabs">${tab('login', '로그인')}${tab('create', '새 계정')}${tab('restore', '백업으로 복구')}</div>`;
+  if (mode === 'login') {
+    html += `<form>
+        ${users.length ? '' : `<p class="hint">이 브라우저에는 아직 계정이 없어요.<br>
+          처음이면 <b>새 계정</b>, 다른 브라우저(크롬↔엣지 등)나 다른 PC에서 쓰던 분은 그쪽에서 💾 백업한 뒤 <b>백업으로 복구</b>를 눌러주세요.</p>`}
+        <label>이름</label>
+        <input id="lName" list="lUsers" autocomplete="username" value="${esc(users.includes(last) ? last : users[0] || '')}">
+        <datalist id="lUsers">${users.map(u => `<option value="${esc(u)}">`).join('')}</datalist>
+        <label>비밀번호</label><input id="lPw" type="password" autocomplete="current-password">
+        <div class="err" id="lErr"></div>
+        <button class="primary" type="submit">로그인</button>
+      </form>`;
+  } else if (mode === 'create') {
+    html += `<form>
+        <p class="hint">나만 쓰는 보관함을 만들어요. 쪽지와 첨부파일은 이 비밀번호로 암호화돼서, 같은 PC를 쓰는 다른 사람은 열어볼 수 없어요.</p>
+        ${legacyN ? `<p class="hint">전에 보관한 쪽지 ${legacyN}개도 이 계정으로 옮겨서 암호화해요.</p>` : ''}
+        <label>이름 (예: 3팀 홍길동)</label><input id="cName" maxlength="20" autocomplete="username">
+        <label>비밀번호 (6자 이상)</label><input id="cPw" type="password" autocomplete="new-password">
+        <label>비밀번호 확인</label><input id="cPw2" type="password" autocomplete="new-password">
+        <p class="warn">⚠️ 비밀번호를 잊으면 쪽지를 되살릴 방법이 없어요. 꼭 기억해 두세요.</p>
+        <div class="err" id="lErr"></div>
+        <button class="primary" type="submit">계정 만들기</button>
+      </form>`;
+  } else {
+    html += `<form>
+        <p class="hint">💾 백업 파일과 백업할 때의 비밀번호로 보관함을 되살려요. 새 버전 파일로 옮길 때도 이걸 쓰면 돼요.</p>
+        <label>백업 파일</label><input id="rFile" type="file" accept=".json">
+        <label>백업할 때의 비밀번호</label><input id="rPw" type="password">
+        <div class="err" id="lErr"></div>
+        <button class="primary" type="submit">복구하기</button>
+      </form>`;
+  }
+  $('#lock').innerHTML = html + '</div>';
+  $('#lock').querySelectorAll('[data-mode]').forEach(a => a.onclick = e => { e.preventDefault(); showLock(a.dataset.mode); });
+  const form = $('#lock form');
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type=submit]'), label = btn.textContent;
+    $('#lErr').textContent = '';
+    btn.disabled = true; btn.textContent = '잠시만요…';
+    try {
+      if (mode === 'login') await doLogin($('#lName').value.trim(), $('#lPw').value);
+      else if (mode === 'create') await doCreate($('#cName').value.trim(), $('#cPw').value, $('#cPw2').value);
+      else await doRestore($('#rFile').files[0], $('#rPw').value);
+    } catch (ex) {
+      $('#lErr').innerHTML = esc(ex.message).replace(/\n/g, '<br>');
+      btn.disabled = false; btn.textContent = label;
+    }
+  };
+  const lName = $('#lName');
+  (lName && lName.value ? $('#lPw') : lName || $('#cName') || $('#rFile')).focus();
+}
+
+async function doLogin(name, pw) {
+  const rec = readUser(name);
+  if (!name) throw new Error('이름을 입력해 주세요.');
+  if (!rec) throw new Error(`이 브라우저에는 '${name}' 계정이 없어요.\n다른 브라우저나 PC에서 쓰던 계정이면 그쪽에서 💾 백업한 뒤 [백업으로 복구] 탭을 이용해 주세요.`);
+  const key = await importDek(await unwrapRaw(rec, pw));
+  enter(name, key, normDb(JSON.parse(await decText(key, rec.data))));
+}
+async function doCreate(name, pw, pw2) {
+  if (!name) throw new Error('이름을 입력해 주세요.');
+  if (readUser(name)) throw new Error('이미 있는 이름이에요.');
+  if (pw.length < 6) throw new Error('비밀번호는 6자 이상으로 해주세요.');
+  if (pw !== pw2) throw new Error('비밀번호 확인이 달라요.');
+  const first = !listUsers().length;
+  const raw = crypto.getRandomValues(new Uint8Array(32));
+  const key = await importDek(raw);
+  let data = emptyDb();
+  if (first && legacyCount()) data = normDb(JSON.parse(localStorage.getItem(LEGACY_KEY)));
+  writeUser(name, { v: 2, kid: uid(), ...(await wrapKey(raw, pw)), data: await encText(key, JSON.stringify(data)) });
+  if (first) {
+    localStorage.removeItem(LEGACY_KEY);
+    try {   // 로그인 기능 전에 연결한 첨부 폴더는 첫 사용자 것으로
+      const h = await idbGet('kv', 'folder');
+      if (h) { await idbPut('kv', 'folder:' + name, h); await idbDel('kv', 'folder'); }
+    } catch (e) { console.warn(e); }
+  }
+  enter(name, key, data);
+}
+async function doRestore(file, pw) {
+  if (!file) throw new Error('백업 파일을 골라주세요.');
+  let b;
+  try { b = JSON.parse(await file.text()); } catch { throw new Error('백업 파일을 읽을 수 없어요.'); }
+  if (b.version !== 2 || !b.wrapped) throw new Error('암호화된 백업 파일이 아니에요. (예전 백업은 로그인한 뒤 📂 불러오기로 넣어주세요)');
+  const key = await importDek(await unwrapRaw(b, pw));
+  const data = normDb(JSON.parse(await decText(key, b.data)));
+  const name = b.user || '복구한 사용자';
+  if (readUser(name) && !confirm(`'${name}' 사용자가 이미 있어요. 백업 내용으로 덮어쓸까요?`)) throw new Error('복구를 취소했어요.');
+  writeUser(name, { v: 2, kid: b.kid, salt: b.salt, iter: b.iter, wrapped: b.wrapped, data: b.data });
+  enter(name, key, data);
+}
+
+function enter(name, key, data) {
+  me = { name, key };
+  db = data;
+  try { localStorage.setItem('jjokji-last-user', name); } catch {}
+  document.body.classList.remove('locked');
+  $('#lock').innerHTML = '';
+  $('#btnLock').textContent = `🔒 ${name} 잠금`;
+  lastActive = Date.now();
+  resetPaste();
+  renderAll();
+  restoreFolder();
+}
+// 잠그면 메모리에서 열쇠와 쪽지를 지우기 위해 페이지를 새로 엶
+async function lockNow() {
+  await saving;
+  location.reload();
+}
+$('#btnLock').onclick = lockNow;
+
+let lastActive = Date.now();
+['mousemove', 'keydown', 'click', 'scroll'].forEach(ev => window.addEventListener(ev, () => lastActive = Date.now(), { passive: true }));
+setInterval(() => { if (me && Date.now() - lastActive > AUTO_LOCK_MIN * 60000) lockNow(); }, 30000);
+
+/* 간단한 입력 창 (비밀번호 바꾸기 등) */
+function formDialog(title, fields, onOk) {
+  return new Promise(resolve => {
+    const dlg = $('#dlgForm');
+    dlg.innerHTML = `<form>
+      <div class="dhead"><h2>${esc(title)}</h2></div>
+      <div class="dbody">
+        ${fields.map(f => `<div><label>${esc(f.label)}</label><input id="f_${f.id}" type="${f.type || 'text'}"></div>`).join('')}
+        <div class="err" id="fErr"></div>
+      </div>
+      <div class="dfoot"><span class="spacer"></span><button type="button" id="fCancel">취소</button><button class="primary" type="submit">확인</button></div>
+    </form>`;
+    const done = v => { if (dlg.open) dlg.close(); resolve(v); };
+    $('#fCancel').onclick = () => done(null);
+    dlg.oncancel = () => resolve(null);
+    dlg.querySelector('form').onsubmit = async e => {
+      e.preventDefault();
+      const v = Object.fromEntries(fields.map(f => [f.id, $('#f_' + f.id).value]));
+      try { await onOk(v); done(v); } catch (ex) { $('#fErr').textContent = ex.message; }
+    };
+    dlg.showModal();
+  });
+}
+$('#btnPw').onclick = async () => {
+  const ok = await formDialog('비밀번호 바꾸기', [
+    { id: 'old', label: '지금 비밀번호', type: 'password' },
+    { id: 'pw', label: '새 비밀번호 (6자 이상)', type: 'password' },
+    { id: 'pw2', label: '새 비밀번호 확인', type: 'password' },
+  ], async v => {
+    if (v.pw.length < 6) throw new Error('비밀번호는 6자 이상으로 해주세요.');
+    if (v.pw !== v.pw2) throw new Error('새 비밀번호 확인이 달라요.');
+    await saving;
+    const rec = readUser(me.name);
+    const raw = await unwrapRaw(rec, v.old).catch(() => { throw new Error('지금 비밀번호가 맞지 않아요.'); });
+    writeUser(me.name, { ...rec, ...(await wrapKey(raw, v.pw)) });
+  });
+  if (ok) toast('비밀번호를 바꿨어요. 예전 백업 파일은 예전 비밀번호로 열려요');
+};
+
+/* ===================== 시작 ===================== */
+showLock();
+</script>
+</body>
+</html>
