@@ -52,6 +52,11 @@
 
   .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; padding: 16px 20px; max-width: 1200px; margin: 0 auto; }
   aside { display: flex; flex-direction: column; gap: 4px; }
+  /* 쪽지가 많아 스크롤해도 왼쪽 분류는 제자리에 (분류가 많으면 왼쪽만 따로 스크롤) */
+  @media (min-width: 761px) {
+    aside { position: sticky; top: calc(var(--hh, 60px) + 16px); align-self: start;
+            max-height: calc(100vh - var(--hh, 60px) - 32px); overflow-y: auto; }
+  }
   aside .cat {
     display: flex; justify-content: space-between; align-items: center;
     padding: 8px 12px; border-radius: 8px; cursor: pointer; border: 1px solid transparent;
@@ -193,6 +198,13 @@
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   .toast.show { opacity: 1; }
+  .totop {
+    position: fixed; right: 20px; bottom: 20px; z-index: 6; width: 44px; height: 44px; border-radius: 50%;
+    font-size: 18px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .totop.show { opacity: 1; pointer-events: auto; }
+  body.locked .totop { display: none; }
 
   @media (max-width: 760px) {
     header { flex-wrap: wrap; padding: 10px 16px; }
@@ -219,7 +231,7 @@
     <button id="btnImport" title="백업 파일 불러오기">📂 불러오기</button>
     <input type="file" id="fileImport" accept=".json" hidden>
     <button id="btnPw" title="비밀번호 바꾸기">🔑</button>
-    <button id="btnLock" title="로그아웃하고 보관함을 잠가요 (10분 동안 아무것도 안 하면 자동으로 잠겨요)">🔒 로그아웃</button>
+    <button id="btnLock" title="로그아웃 (10분 동안 아무것도 안 하면 자동으로 로그아웃돼요)">🔒 로그아웃</button>
   </div>
 </header>
 
@@ -1232,7 +1244,7 @@ $('#fileImport').onchange = async e => {
     let data = JSON.parse(await f.text());
     if (data.version === 2 && data.data) {
       if (data.kid !== readUser(me.name).kid)
-        throw new Error('다른 사용자의 백업 파일이에요. 잠금 화면의 "백업 파일로 복구"를 이용해 주세요.');
+        throw new Error('다른 사용자의 백업 파일이에요. 로그아웃한 뒤 로그인 화면의 "백업으로 복구"를 이용해 주세요.');
       data = normDb(JSON.parse(await decText(me.key, data.data)));
     }
     if (!Array.isArray(data.notes)) throw new Error('쪽지 보관함 백업 파일이 아니에요');
@@ -1413,6 +1425,15 @@ $('#btnPw').onclick = async () => {
   });
   if (ok) toast('비밀번호를 바꿨어요. 예전 백업 파일은 예전 비밀번호로 열려요');
 };
+
+/* 맨 위로 버튼 + 왼쪽 분류 고정 위치(머리줄 높이) */
+const toTop = document.createElement('button');
+toTop.className = 'totop'; toTop.title = '맨 위로'; toTop.setAttribute('aria-label', '맨 위로'); toTop.textContent = '▲';
+toTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+document.body.appendChild(toTop);
+window.addEventListener('scroll', () => toTop.classList.toggle('show', window.scrollY > 400), { passive: true });
+const setHeaderH = () => document.documentElement.style.setProperty('--hh', document.querySelector('body > header').offsetHeight + 'px');
+new ResizeObserver(setHeaderH).observe(document.querySelector('body > header'));
 
 /* ===================== 시작 ===================== */
 showLock();
