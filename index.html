@@ -153,7 +153,7 @@
 
   /* 잠금 화면 */
   .lock { display: none; }
-  body.locked .lock { display: flex; min-height: 100vh; align-items: center; justify-content: center; padding: 16px; }
+  body.locked .lock { display: flex; min-height: 100vh; align-items: flex-start; justify-content: center; padding: clamp(24px, 12vh, 120px) 16px 16px; }   /* 탭을 바꿔도 제목·탭 위치가 그대로 있도록 위쪽 정렬 */
   body.locked > header, body.locked > .layout { display: none; }
   .lockbox { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 28px; width: min(380px, 100%); }
   .lockbox h1 { font-size: 22px; margin: 0 0 16px; text-align: center; }
@@ -219,7 +219,7 @@
     <button id="btnImport" title="백업 파일 불러오기">📂 불러오기</button>
     <input type="file" id="fileImport" accept=".json" hidden>
     <button id="btnPw" title="비밀번호 바꾸기">🔑</button>
-    <button id="btnLock" title="잠그기 (10분 동안 아무것도 안 하면 자동으로 잠겨요)">🔒 잠금</button>
+    <button id="btnLock" title="로그아웃하고 보관함을 잠가요 (10분 동안 아무것도 안 하면 자동으로 잠겨요)">🔒 로그아웃</button>
   </div>
 </header>
 
@@ -1264,7 +1264,7 @@ function showLock(mode = 'login') {
     html += `<form>
         ${users.length ? '' : `<p class="hint">이 브라우저에는 아직 계정이 없어요.<br>
           처음이면 <b>새 계정</b>, 다른 브라우저(크롬↔엣지 등)나 다른 PC에서 쓰던 분은 그쪽에서 💾 백업한 뒤 <b>백업으로 복구</b>를 눌러주세요.</p>`}
-        <label>이름</label>
+        <label>아이디</label>
         <input id="lName" list="lUsers" autocomplete="username" value="${esc(users.includes(last) ? last : users[0] || '')}">
         <datalist id="lUsers">${users.map(u => `<option value="${esc(u)}">`).join('')}</datalist>
         <label>비밀번호</label><input id="lPw" type="password" autocomplete="current-password">
@@ -1275,7 +1275,7 @@ function showLock(mode = 'login') {
     html += `<form>
         <p class="hint">나만 쓰는 보관함을 만들어요. 쪽지와 첨부파일은 이 비밀번호로 암호화돼서, 같은 PC를 쓰는 다른 사람은 열어볼 수 없어요.</p>
         ${legacyN ? `<p class="hint">전에 보관한 쪽지 ${legacyN}개도 이 계정으로 옮겨서 암호화해요.</p>` : ''}
-        <label>이름 (예: 3팀 홍길동)</label><input id="cName" maxlength="20" autocomplete="username">
+        <label>아이디</label><input id="cName" maxlength="20" autocomplete="username">
         <label>비밀번호 (6자 이상)</label><input id="cPw" type="password" autocomplete="new-password">
         <label>비밀번호 확인</label><input id="cPw2" type="password" autocomplete="new-password">
         <p class="warn">⚠️ 비밀번호를 잊으면 쪽지를 되살릴 방법이 없어요. 꼭 기억해 두세요.</p>
@@ -1314,14 +1314,14 @@ function showLock(mode = 'login') {
 
 async function doLogin(name, pw) {
   const rec = readUser(name);
-  if (!name) throw new Error('이름을 입력해 주세요.');
+  if (!name) throw new Error('아이디를 입력해 주세요.');
   if (!rec) throw new Error(`이 브라우저에는 '${name}' 계정이 없어요.\n다른 브라우저나 PC에서 쓰던 계정이면 그쪽에서 💾 백업한 뒤 [백업으로 복구] 탭을 이용해 주세요.`);
   const key = await importDek(await unwrapRaw(rec, pw));
   enter(name, key, normDb(JSON.parse(await decText(key, rec.data))));
 }
 async function doCreate(name, pw, pw2) {
-  if (!name) throw new Error('이름을 입력해 주세요.');
-  if (readUser(name)) throw new Error('이미 있는 이름이에요.');
+  if (!name) throw new Error('아이디를 입력해 주세요.');
+  if (readUser(name)) throw new Error('이미 있는 아이디예요.');
   if (pw.length < 6) throw new Error('비밀번호는 6자 이상으로 해주세요.');
   if (pw !== pw2) throw new Error('비밀번호 확인이 달라요.');
   const first = !listUsers().length;
@@ -1358,7 +1358,7 @@ function enter(name, key, data) {
   try { localStorage.setItem('jjokji-last-user', name); } catch {}
   document.body.classList.remove('locked');
   $('#lock').innerHTML = '';
-  $('#btnLock').textContent = `🔒 ${name} 잠금`;
+  $('#btnLock').textContent = `🔒 ${name} · 로그아웃`;
   lastActive = Date.now();
   resetPaste();
   renderAll();
